@@ -39,30 +39,6 @@ namespace SekiroFpsUnlockAndMore
         [XmlElement]
         public bool cbLogStats { get; set; }
         [XmlElement]
-        public bool exGameMods { get; set; }
-        [XmlElement]
-        public bool cbCamAdjust { get; set; }
-        [XmlElement]
-        public bool cbCamReset { get; set; }
-        [XmlElement]
-        public bool cbAutoLoot { get; set; }
-        [XmlElement]
-        public bool cbDragonrot { get; set; }
-        [XmlElement]
-        public bool cbDeathPenalty { get; set; }
-        [XmlElement]
-        public int hiddenDPs { get; set; }
-        [XmlElement]
-        public bool cbEmblemUpgrade { get; set; }
-        [XmlElement]
-        public bool cbGameSpeed { get; set; }
-        [XmlElement]
-        public int tbGameSpeed { get; set; }
-        [XmlElement]
-        public bool cbPlayerSpeed { get; set; }
-        [XmlElement]
-        public int tbPlayerSpeed { get; set; }
-        [XmlElement]
         public bool exGuide { get; set; }
     }
 

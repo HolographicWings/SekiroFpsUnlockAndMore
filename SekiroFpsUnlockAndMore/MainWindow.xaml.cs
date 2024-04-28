@@ -28,20 +28,6 @@ namespace SekiroFpsUnlockAndMore
         internal long _offset_resolution_scaling_fix = 0x0;
         internal long _offset_player_deaths = 0x0;
         internal long _offset_total_kills = 0x0;
-        internal long _offset_camera_reset = 0x0;
-        internal long _offset_autoloot = 0x0;
-        internal long _offset_dragonrot_routine = 0x0;
-        internal long _offset_deathpenalties1 = 0x0;
-        internal long _offset_deathpenalties2 = 0x0;
-        internal long _offset_deathpenalties3 = 0x0;
-        internal long _offset_deathscounter_routine = 0x0;
-        internal long _offset_timescale = 0x0;
-        internal long _offset_timescale_player = 0x0;
-        internal long _offset_timescale_player_pointer_start = 0x0;
-
-        internal byte[] _patch_deathpenalties1_enable;
-        internal byte[] _patch_deathpenalties2_enable;
-        internal byte[] _patch_deathpenalties3_enable;
 
         internal MemoryCaveGenerator _memoryCaveGenerator;
         internal SettingsService _settingsService;
@@ -56,8 +42,6 @@ namespace SekiroFpsUnlockAndMore
         internal bool _use_resolution_720 = false;
         internal bool _dataCave_speedfix = false;
         internal bool _dataCave_fovsetting = false;
-        internal bool _codeCave_camadjust = false;
-        internal bool _codeCave_emblemupgrade = false;
         internal bool _retryAccess = true;
         internal bool _statLoggingEnabled = false;
         internal bool _initialStartup = true;
@@ -71,11 +55,6 @@ namespace SekiroFpsUnlockAndMore
 
         internal const string _DATACAVE_SPEEDFIX_POINTER = "speedfixPointer";
         internal const string _DATACAVE_FOV_POINTER = "fovPointer";
-        internal const string _CODECAVE_CAMADJUST_PITCH = "camAdjustPitch";
-        internal const string _CODECAVE_CAMADJUST_YAW_Z = "camAdjustYawZ";
-        internal const string _CODECAVE_CAMADJUST_PITCH_XY = "camAdjustPitchXY";
-        internal const string _CODECAVE_CAMADJUST_YAW_XY = "camAdjustYawXY";
-        internal const string _CODECAVE_EMBLEM_UPGRADE = "emblemCapUpgrade";
 
         public MainWindow()
         {
@@ -106,7 +85,6 @@ namespace SekiroFpsUnlockAndMore
                     {
                         // high contrast mode is active, remove grid background color and let the OS handle it
                         gMainGrid.Background = null;
-                        gSubGrid1.Background = null;
                     }
                 }
             }
@@ -149,7 +127,6 @@ namespace SekiroFpsUnlockAndMore
             _dispatcherTimerGameCheck.Interval = new TimeSpan(0, 0, 0, 0, 2000);
             _dispatcherTimerGameCheck.Start();
 
-            _dispatcherTimerFreezeMem.Tick += new EventHandler(FreezeMemory);
             _dispatcherTimerFreezeMem.Interval = new TimeSpan(0, 0, 0, 0, 2000);
 
             _timerStatsCheck.Elapsed += new ElapsedEventHandler(StatsReadTimer);
@@ -181,19 +158,7 @@ namespace SekiroFpsUnlockAndMore
 
             if (msg.wParam.ToInt32() == 9009)   // toggle speed modifier
             {
-                if (this.cbGameSpeed.IsEnabled && this.cbPlayerSpeed.IsEnabled)
-                {
-                    if (this.cbGameSpeed.IsChecked == false)
-                    {
-                        this.cbGameSpeed.IsChecked = true;
-                        this.cbPlayerSpeed.IsChecked = true;
-                    }
-                    else
-                    {
-                        this.cbGameSpeed.IsChecked = false;
-                        this.cbPlayerSpeed.IsChecked = false;
-                    }
-                }
+                return;
             }
             else if (msg.wParam.ToInt32() == 9010)   // patch game
             {
@@ -219,19 +184,6 @@ namespace SekiroFpsUnlockAndMore
             this.cbBorderless.IsChecked = _settingsService.ApplicationSettings.cbBorderless;
             this.cbBorderlessStretch.IsChecked = _settingsService.ApplicationSettings.cbBorderlessStretch;
             this.cbLogStats.IsChecked = _settingsService.ApplicationSettings.cbLogStats;
-            this.exGameMods.IsExpanded = _settingsService.ApplicationSettings.exGameMods;
-            this.cbCamAdjust.IsChecked = _settingsService.ApplicationSettings.cbCamAdjust;
-            this.cbCamReset.IsChecked = _settingsService.ApplicationSettings.cbCamReset;
-            this.cbAutoLoot.IsChecked = _settingsService.ApplicationSettings.cbAutoLoot;
-            this.cbDragonrot.IsChecked = _settingsService.ApplicationSettings.cbDragonrot;
-            this.cbDeathPenalty.IsChecked = _settingsService.ApplicationSettings.cbDeathPenalty;
-            this.cbDeathPenaltyHidden.Visibility = _settingsService.ApplicationSettings.hiddenDPs == ZUH_HIDDEN_DP ? Visibility.Visible : Visibility.Collapsed;
-            if (_settingsService.ApplicationSettings.hiddenDPs == ZUH_HIDDEN_DP) { _debugMode = true; sbMode.Text = "DEBUG"; }
-            this.cbEmblemUpgrade.IsChecked = _settingsService.ApplicationSettings.cbEmblemUpgrade;
-            this.cbGameSpeed.IsChecked = _settingsService.ApplicationSettings.cbGameSpeed;
-            this.tbGameSpeed.Text = _settingsService.ApplicationSettings.tbGameSpeed.ToString();
-            this.cbPlayerSpeed.IsChecked = _settingsService.ApplicationSettings.cbPlayerSpeed;
-            this.tbPlayerSpeed.Text = _settingsService.ApplicationSettings.tbPlayerSpeed.ToString();
             this.exGuide.IsExpanded = _settingsService.ApplicationSettings.exGuide;
         }
 
@@ -250,17 +202,6 @@ namespace SekiroFpsUnlockAndMore
             _settingsService.ApplicationSettings.cbBorderless = this.cbBorderless.IsChecked == true;
             _settingsService.ApplicationSettings.cbBorderlessStretch = this.cbBorderlessStretch.IsChecked == true;
             _settingsService.ApplicationSettings.cbLogStats = this.cbLogStats.IsChecked == true;
-            _settingsService.ApplicationSettings.exGameMods = this.exGameMods.IsExpanded;
-            _settingsService.ApplicationSettings.cbCamAdjust = this.cbCamAdjust.IsChecked == true;
-            _settingsService.ApplicationSettings.cbCamReset = this.cbCamReset.IsChecked == true;
-            _settingsService.ApplicationSettings.cbAutoLoot = this.cbAutoLoot.IsChecked == true;
-            _settingsService.ApplicationSettings.cbDragonrot = this.cbDragonrot.IsChecked == true;
-            _settingsService.ApplicationSettings.cbDeathPenalty = this.cbDeathPenalty.IsChecked == true;
-            _settingsService.ApplicationSettings.cbEmblemUpgrade = this.cbEmblemUpgrade.IsChecked == true;
-            _settingsService.ApplicationSettings.cbGameSpeed = this.cbGameSpeed.IsChecked == true;
-            _settingsService.ApplicationSettings.tbGameSpeed = this.tbGameSpeed.Text != "" && !this.tbGameSpeed.Text.Contains(" ") ? Convert.ToInt32(this.tbGameSpeed.Text) : 100;
-            _settingsService.ApplicationSettings.cbPlayerSpeed = this.cbPlayerSpeed.IsChecked == true;
-            _settingsService.ApplicationSettings.tbPlayerSpeed = this.tbPlayerSpeed.Text != "" && !this.tbPlayerSpeed.Text.Contains(" ") ? Convert.ToInt32(this.tbPlayerSpeed.Text) : 100;
             _settingsService.ApplicationSettings.exGuide = this.exGuide.IsExpanded;
             _settingsService.Save();
         }
@@ -280,18 +221,6 @@ namespace SekiroFpsUnlockAndMore
             this.cbBorderless.IsChecked = false;
             this.cbBorderlessStretch.IsChecked = false;
             this.cbLogStats.IsChecked = false;
-            this.exGameMods.IsExpanded = true;
-            this.cbCamAdjust.IsChecked = false;
-            this.cbCamReset.IsChecked = false;
-            this.cbAutoLoot.IsChecked = false;
-            this.cbDragonrot.IsChecked = false;
-            this.cbDeathPenalty.IsChecked = false;
-            this.cbDeathPenaltyHidden.Visibility = Visibility.Collapsed;
-            this.cbEmblemUpgrade.IsChecked = false;
-            this.cbGameSpeed.IsChecked = false;
-            this.tbGameSpeed.Text = "100";
-            this.cbPlayerSpeed.IsChecked = false;
-            this.tbPlayerSpeed.Text = "100";
             this.sbMode.Text = "";
             _settingsService.Clear();
         }
@@ -484,166 +413,6 @@ namespace SekiroFpsUnlockAndMore
             }
             if (!IsValidAddress(_offset_total_kills))
                 _offset_total_kills = 0x0;
-
-            _offset_autoloot = patternScan.FindPattern(GameData.PATTERN_AUTOLOOT) + GameData.PATTERN_AUTOLOOT_OFFSET;
-            Debug.WriteLine("lpAutoLoot found at: 0x" + _offset_autoloot.ToString("X"));
-            if (!IsValidAddress(_offset_autoloot))
-                _offset_autoloot = 0x0;
-
-            long lpCamAdjustPitch = patternScan.FindPattern(GameData.PATTERN_CAMADJUST_PITCH);
-            long lpCamAdjustYawZ = patternScan.FindPattern(GameData.PATTERN_CAMADJUST_YAW_Z) + GameData.PATTERN_CAMADJUST_YAW_Z_OFFSET;
-            long lpCamAdjustPitchXY = patternScan.FindPattern(GameData.PATTERN_CAMADJUST_PITCH_XY);
-            long lpCamAdjustYawXY = patternScan.FindPattern(GameData.PATTERN_CAMADJUST_YAW_XY) + GameData.PATTERN_CAMADJUST_YAW_XY_OFFSET;
-            Debug.WriteLine("lpCamAdjustPitch found at: 0x" + lpCamAdjustPitch.ToString("X"));
-            Debug.WriteLine("lpCamAdjustYawZ found at: 0x" + lpCamAdjustYawZ.ToString("X"));
-            Debug.WriteLine("lpCamAdjustPitchXY found at: 0x" + lpCamAdjustPitchXY.ToString("X"));
-            Debug.WriteLine("lpCamAdjustYawXY found at: 0x" + lpCamAdjustYawXY.ToString("X"));
-            if (IsValidAddress(lpCamAdjustPitch) && IsValidAddress(lpCamAdjustYawZ) && IsValidAddress(lpCamAdjustPitchXY) && IsValidAddress(lpCamAdjustYawXY))
-            {
-                List<bool> results = new List<bool>
-                {
-                    _memoryCaveGenerator.CreateNewCodeCave(_CODECAVE_CAMADJUST_PITCH, lpCamAdjustPitch, GameData.INJECT_CAMADJUST_PITCH_OVERWRITE_LENGTH, GameData.INJECT_CAMADJUST_PITCH_SHELLCODE),
-                    _memoryCaveGenerator.CreateNewCodeCave(_CODECAVE_CAMADJUST_YAW_Z, lpCamAdjustYawZ, GameData.INJECT_CAMADJUST_YAW_Z_OVERWRITE_LENGTH, GameData.INJECT_CAMADJUST_YAW_Z_SHELLCODE),
-                    _memoryCaveGenerator.CreateNewCodeCave(_CODECAVE_CAMADJUST_PITCH_XY, lpCamAdjustPitchXY, GameData.INJECT_CAMADJUST_PITCH_XY_OVERWRITE_LENGTH, GameData.INJECT_CAMADJUST_PITCH_XY_SHELLCODE),
-                    _memoryCaveGenerator.CreateNewCodeCave(_CODECAVE_CAMADJUST_YAW_XY, lpCamAdjustYawXY, GameData.INJECT_CAMADJUST_YAW_XY_OVERWRITE_LENGTH, GameData.INJECT_CAMADJUST_YAW_XY_SHELLCODE)
-                };
-                Debug.WriteLine("lpCamAdjustPitch code cave at: 0x" + _memoryCaveGenerator.GetCodeCaveAddressByName(_CODECAVE_CAMADJUST_PITCH).ToString("X"));
-                Debug.WriteLine("lpCamAdjustYawZ code cave at: 0x" + _memoryCaveGenerator.GetCodeCaveAddressByName(_CODECAVE_CAMADJUST_YAW_Z).ToString("X"));
-                Debug.WriteLine("lpCamAdjustPitchXY code cave at: 0x" + _memoryCaveGenerator.GetCodeCaveAddressByName(_CODECAVE_CAMADJUST_PITCH_XY).ToString("X"));
-                Debug.WriteLine("lpCamAdjustYawXY code cave at: 0x" + _memoryCaveGenerator.GetCodeCaveAddressByName(_CODECAVE_CAMADJUST_YAW_XY).ToString("X"));
-                if (results.IndexOf(false) < 0)
-                    _codeCave_camadjust = true;
-            }
-
-            _offset_camera_reset = patternScan.FindPattern(GameData.PATTERN_CAMRESET_LOCKON) + GameData.PATTERN_CAMRESET_LOCKON_OFFSET;
-            Debug.WriteLine("lpCameraReset found at: 0x" + _offset_camera_reset.ToString("X"));
-            if (!IsValidAddress(_offset_camera_reset))
-                _offset_camera_reset = 0x0;
-
-            _offset_dragonrot_routine = patternScan.FindPattern(GameData.PATTERN_DRAGONROT_EFFECT) + GameData.PATTERN_DRAGONROT_EFFECT_OFFSET;
-            Debug.WriteLine("lpDragonRot found at: 0x" + _offset_dragonrot_routine.ToString("X"));
-            if (!IsValidAddress(_offset_dragonrot_routine))
-                _offset_dragonrot_routine = 0x0;
-
-            _offset_deathpenalties1 = patternScan.FindPattern(GameData.PATTERN_DEATHPENALTIES1) + GameData.PATTERN_DEATHPENALTIES1_OFFSET;
-            Debug.WriteLine("lpDeathPenalties1 found at: 0x" + _offset_deathpenalties1.ToString("X"));
-            if (IsValidAddress(_offset_deathpenalties1))
-            {
-                _patch_deathpenalties1_enable = new byte[GameData.PATCH_DEATHPENALTIES1_INSTRUCTION_LENGTH];
-                if (!ReadProcessMemory(_gameAccessHwnd, _offset_deathpenalties1, _patch_deathpenalties1_enable, (ulong)GameData.PATCH_DEATHPENALTIES1_INSTRUCTION_LENGTH, out IntPtr lpNumberOfBytesRead) || lpNumberOfBytesRead.ToInt32() != GameData.PATCH_DEATHPENALTIES1_INSTRUCTION_LENGTH)
-                    _patch_deathpenalties1_enable = null;
-                else
-                    Debug.WriteLine("deathPenalties1 original instruction set: " + BitConverter.ToString(_patch_deathpenalties1_enable).Replace('-', ' '));
-                if (_patch_deathpenalties1_enable != null)
-                {
-                    if (!_isLegacyVersion)
-                        _offset_deathpenalties2 = patternScan.FindPattern(GameData.PATTERN_DEATHPENALTIES2) + GameData.PATTERN_DEATHPENALTIES2_OFFSET;
-                    else
-                        _offset_deathpenalties2 = patternScan.FindPattern(GameData.PATTERN_DEATHPENALTIES2_LEGACY) + GameData.PATTERN_DEATHPENALTIES2_OFFSET_LEGACY;
-                    Debug.WriteLine("lpDeathPenalties2 found at: 0x" + _offset_deathpenalties2.ToString("X"));
-                    if (IsValidAddress(_offset_deathpenalties2))
-                    {
-                        ulong instrLength = (ulong)GameData.PATCH_DEATHPENALTIES2_INSTRUCTION_LENGTH;
-                        if (!_isLegacyVersion)
-                            _patch_deathpenalties2_enable = new byte[GameData.PATCH_DEATHPENALTIES2_INSTRUCTION_LENGTH];
-                        else
-                        {
-                            _patch_deathpenalties2_enable = new byte[GameData.PATCH_DEATHPENALTIES2_INSTRUCTION_LENGTH_LEGACY];
-                            instrLength = (ulong)GameData.PATCH_DEATHPENALTIES2_INSTRUCTION_LENGTH_LEGACY;
-                        }
-                        if (!ReadProcessMemory(_gameAccessHwnd, _offset_deathpenalties2, _patch_deathpenalties2_enable, instrLength, out lpNumberOfBytesRead) || lpNumberOfBytesRead.ToInt32() != (long)instrLength)
-                            _patch_deathpenalties2_enable = null;
-                        else
-                        {
-                            Debug.WriteLine("deathPenalties2 original instruction set: " + BitConverter.ToString(_patch_deathpenalties2_enable).Replace('-', ' '));
-                            if (!_isLegacyVersion)
-                            {
-                                _offset_deathpenalties3 = _offset_deathpenalties2 + GameData.PATTERN_DEATHPENALTIES3_OFFSET;
-                                _patch_deathpenalties3_enable = new byte[GameData.PATCH_DEATHPENALTIES3_INSTRUCTION_LENGTH];
-                                if (!ReadProcessMemory(_gameAccessHwnd, _offset_deathpenalties3, _patch_deathpenalties3_enable, (ulong)GameData.PATCH_DEATHPENALTIES3_INSTRUCTION_LENGTH, out lpNumberOfBytesRead) || lpNumberOfBytesRead.ToInt32() != GameData.PATCH_DEATHPENALTIES3_INSTRUCTION_LENGTH)
-                                    _patch_deathpenalties2_enable = null;
-                                else
-                                    Debug.WriteLine("deathPenalties3 original instruction set: " + BitConverter.ToString(_patch_deathpenalties3_enable).Replace('-', ' '));
-                            }
-                        }
-                    }
-                    else
-                        _offset_deathpenalties2 = 0x0;
-                }
-            }
-            if (_offset_deathpenalties2 == 0x0 || _patch_deathpenalties2_enable == null)
-            {
-                _offset_deathpenalties1 = 0x0;
-                _offset_deathpenalties2 = 0x0;
-                _offset_deathpenalties3 = 0x0;
-                _patch_deathpenalties1_enable = null;
-                _patch_deathpenalties2_enable = null;
-                _patch_deathpenalties3_enable = null;
-            }
-
-            if (_settingsService.ApplicationSettings.hiddenDPs == ZUH_HIDDEN_DP)
-            {
-                _offset_deathscounter_routine = patternScan.FindPattern(GameData.PATTERN_DEATHSCOUNTER) + GameData.PATTERN_DEATHSCOUNTER_OFFSET;
-                Debug.WriteLine("lpDeathsCounter found at: 0x" + _offset_deathscounter_routine.ToString("X"));
-                if (!IsValidAddress(_offset_deathscounter_routine))
-                    _offset_deathscounter_routine = 0x0;
-            }
-
-            long lpSkill4OnUpgrade = patternScan.FindPattern(GameData.PATTERN_EMBLEMUPGRADE) + GameData.PATTERN_EMBLEMUPGRADE_OFFSET;
-            Debug.WriteLine("lpSkill4OnUpgrade found at: 0x" + lpSkill4OnUpgrade.ToString("X"));
-            if (IsValidAddress(lpSkill4OnUpgrade))
-            {
-                if (_memoryCaveGenerator.CreateNewCodeCave(_CODECAVE_EMBLEM_UPGRADE, lpSkill4OnUpgrade, GameData.INJECT_EMBLEMUPGRADE_OVERWRITE_LENGTH, GameData.INJECT_EMBLEMUPGRADE_SHELLCODE))
-                    _codeCave_emblemupgrade = true;
-                Debug.WriteLine("lpSkill4OnUpgrade code cave at: 0x" + _memoryCaveGenerator.GetCodeCaveAddressByName(_CODECAVE_EMBLEM_UPGRADE).ToString("X"));
-            }
-
-            long ref_lpTimeRelated = patternScan.FindPattern(GameData.PATTERN_TIMESCALE);
-            Debug.WriteLine("ref_lpTimeRelated found at: 0x" + ref_lpTimeRelated.ToString("X"));
-            if (IsValidAddress(ref_lpTimeRelated))
-            {
-                long lpTimescaleManager = DereferenceStaticX64Pointer(_gameAccessHwndStatic, ref_lpTimeRelated, GameData.PATTERN_TIMESCALE_INSTRUCTION_LENGTH);
-                Debug.WriteLine("lpTimescaleManager found at: 0x" + lpTimescaleManager.ToString("X"));
-                if (IsValidAddress(lpTimescaleManager))
-                {
-                    _offset_timescale = Read<Int64>(_gameAccessHwndStatic, lpTimescaleManager) + Read<Int32>(_gameAccessHwndStatic, ref_lpTimeRelated + GameData.PATTERN_TIMESCALE_POINTER_OFFSET_OFFSET);
-                    Debug.WriteLine("fTimescale found at: 0x" + _offset_timescale.ToString("X"));
-                    if (!IsValidAddress(_offset_timescale))
-                        _offset_timescale = 0x0;
-                }
-            }
-
-            long lpPlayerStructRelated1 = patternScan.FindPattern(GameData.PATTERN_TIMESCALE_PLAYER);
-            Debug.WriteLine("lpPlayerStructRelated1 found at: 0x" + lpPlayerStructRelated1.ToString("X"));
-
-            if (IsValidAddress(lpPlayerStructRelated1))
-            {
-                long lpPlayerStructRelated2 = DereferenceStaticX64Pointer(_gameAccessHwndStatic, lpPlayerStructRelated1, GameData.PATTERN_TIMESCALE_PLAYER_INSTRUCTION_LENGTH);
-                Debug.WriteLine("lpPlayerStructRelated2 found at: 0x" + lpPlayerStructRelated2.ToString("X"));
-                if (IsValidAddress(lpPlayerStructRelated2))
-                {
-                    _offset_timescale_player_pointer_start = lpPlayerStructRelated2;
-                    long lpPlayerStructRelated3 = Read<Int64>(_gameAccessHwndStatic, lpPlayerStructRelated2) + GameData.PATTERN_TIMESCALE_POINTER2_OFFSET;
-                    Debug.WriteLine("lpPlayerStructRelated3 found at: 0x" + lpPlayerStructRelated3.ToString("X"));
-                    if (IsValidAddress(lpPlayerStructRelated3))
-                    {
-                        long lpPlayerStructRelated4 = Read<Int64>(_gameAccessHwndStatic, lpPlayerStructRelated3) + GameData.PATTERN_TIMESCALE_POINTER3_OFFSET;
-                        Debug.WriteLine("lpPlayerStructRelated4 found at: 0x" + lpPlayerStructRelated4.ToString("X"));
-                        if (IsValidAddress(lpPlayerStructRelated4))
-                        {
-                            long lpPlayerStructRelated5 = Read<Int64>(_gameAccessHwndStatic, lpPlayerStructRelated4) + GameData.PATTERN_TIMESCALE_POINTER4_OFFSET;
-                            Debug.WriteLine("lpPlayerStructRelated5 found at: 0x" + lpPlayerStructRelated5.ToString("X"));
-                            if (IsValidAddress(lpPlayerStructRelated5))
-                            {
-                                _offset_timescale_player = Read<Int64>(_gameAccessHwndStatic, lpPlayerStructRelated5) + GameData.PATTERN_TIMESCALE_POINTER5_OFFSET;
-                                Debug.WriteLine("fTimescalePlayer found at: 0x" + _offset_timescale_player.ToString("X"));
-                                if (!IsValidAddress(_offset_timescale_player))
-                                    _offset_timescale_player = 0x0;
-                            }
-                        }
-                    }
-                }
-            }
         }
 
         /// <summary>
@@ -708,96 +477,9 @@ namespace SekiroFpsUnlockAndMore
             if (_offset_player_deaths > 0x0 && _offset_total_kills > 0x0)
                 _timerStatsCheck.Start();
 
-            if (!_codeCave_camadjust)
-            {
-                UpdateStatus("cam adjust not found...", Brushes.Red);
-                LogToFile("cam adjust not found...");
-            }
-            this.cbCamAdjust.IsEnabled = _codeCave_camadjust;
-
-            if (_offset_camera_reset == 0x0)
-            {
-                UpdateStatus("camera reset not found...", Brushes.Red);
-                LogToFile("camera reset not found...");
-                this.cbCamReset.IsEnabled = false;
-            }
-
-            if (_offset_autoloot == 0x0)
-            {
-                UpdateStatus("auto loot not found...", Brushes.Red);
-                LogToFile("auto loot not found...");
-                this.cbAutoLoot.IsEnabled = false;
-            }
-
-            if (_offset_dragonrot_routine == 0x0)
-            {
-                UpdateStatus("dragonrot not found...", Brushes.Red);
-                LogToFile("dragonrot not found...");
-                this.cbDragonrot.IsEnabled = false;
-            }
-
-            if (_offset_deathpenalties2 == 0x0)
-            {
-                UpdateStatus("death penalties not found...", Brushes.Red);
-                LogToFile("death penalties not found...");
-                this.cbDeathPenalty.IsEnabled = false;
-            }
-
-            if (_offset_deathscounter_routine == 0x0)
-                this.cbDeathPenaltyHidden.IsEnabled = false;
-
-            if (!_codeCave_emblemupgrade)
-            {
-                UpdateStatus("emblem upgrade not found...", Brushes.Red);
-                LogToFile("emblem upgrade not found...");
-                this.cbEmblemUpgrade.IsEnabled = false;
-            }
-
-            if (_offset_timescale == 0x0)
-            {
-                UpdateStatus("timescale not found...", Brushes.Red);
-                LogToFile("timescale not found...");
-                this.cbGameSpeed.IsEnabled = false;
-            }
-            if (_offset_timescale_player_pointer_start == 0x0)
-            {
-                UpdateStatus("player timescale not found...", Brushes.Red);
-                //LogToFile("player timescale not found...");
-                this.cbPlayerSpeed.IsEnabled = false;
-            }
-
             this.bPatch.IsEnabled = true;
             _running = true;
             PatchGame();
-            InjectCamAdjust();
-            InjectEmblemUpgrades();
-        }
-
-        /// <summary>
-        /// Read and refresh the player speed offset that can change on quick travel or save game loading.
-        /// </summary>
-        private void ReadPlayerTimescaleOffsets()
-        {
-            bool valid = false;
-            if (_offset_timescale_player_pointer_start > 0)
-            {
-                long lpPlayerStructRelated3 = Read<Int64>(_gameAccessHwndStatic, _offset_timescale_player_pointer_start) + GameData.PATTERN_TIMESCALE_POINTER2_OFFSET;
-                if (IsValidAddress(lpPlayerStructRelated3))
-                {
-                    long lpPlayerStructRelated4 = Read<Int64>(_gameAccessHwndStatic, lpPlayerStructRelated3) + GameData.PATTERN_TIMESCALE_POINTER3_OFFSET;
-                    if (IsValidAddress(lpPlayerStructRelated4))
-                    {
-                        long lpPlayerStructRelated5 = Read<Int64>(_gameAccessHwndStatic, lpPlayerStructRelated4) + GameData.PATTERN_TIMESCALE_POINTER4_OFFSET;
-                        if (IsValidAddress(lpPlayerStructRelated5))
-                        {
-                            _offset_timescale_player = Read<Int64>(_gameAccessHwndStatic, lpPlayerStructRelated5) + GameData.PATTERN_TIMESCALE_POINTER5_OFFSET;
-                            if (IsValidAddress(_offset_timescale_player))
-                                valid = true;
-                        }
-                    }
-                }
-            }
-            if (!valid) _offset_timescale_player = 0x0;
         }
 
         /// <summary>
@@ -828,29 +510,13 @@ namespace SekiroFpsUnlockAndMore
             _dataCave_fovsetting = false;
             _offset_player_deaths = 0x0;
             _offset_total_kills = 0x0;
-            _codeCave_camadjust = false;
-            _offset_camera_reset = 0x0;
-            _offset_dragonrot_routine = 0x0;
-            _offset_autoloot = 0x0;
-            _offset_deathpenalties1 = 0x0;
-            _offset_deathpenalties2 = 0x0;
-            _offset_deathscounter_routine = 0x0;
-            _codeCave_emblemupgrade = false;
-            _offset_timescale = 0x0;
-            _offset_timescale_player = 0x0;
-            _offset_timescale_player_pointer_start = 0x0;
-            _patch_deathpenalties1_enable = null;
-            _patch_deathpenalties2_enable = null;
             _memoryCaveGenerator.ClearCaves();
             _memoryCaveGenerator = null;
             this.cbFramelock.IsEnabled = true;
             this.cbAddResolution.IsEnabled = true;
             this.cbFov.IsEnabled = true;
             this.cbBorderless.IsEnabled = false;
-            this.cbCamAdjust.IsEnabled = true;
             this.bPatch.IsEnabled = false;
-            this.cbGameSpeed.IsEnabled = true;
-            this.cbPlayerSpeed.IsEnabled = true;
             UpdateStatus("waiting for game...", Brushes.White);
             _dispatcherTimerGameCheck.Start();
 
@@ -1044,220 +710,6 @@ namespace SekiroFpsUnlockAndMore
         }
 
         /// <summary>
-        /// Patches the game's camera centering on lock-on.
-        /// </summary>
-        /// <param name="showStatus">Determines if status should be updated from within method, default is true.</param>
-        private bool PatchCamReset(bool showStatus = true)
-        {
-            if (!this.cbCamReset.IsEnabled || _offset_camera_reset == 0x0 || !CanPatchGame()) return false;
-            if (this.cbCamReset.IsChecked == true)
-            {
-                WriteBytes(_gameAccessHwndStatic, _offset_camera_reset, GameData.PATCH_CAMRESET_LOCKON_DISABLE);
-            }
-            else if (this.cbCamReset.IsChecked == false)
-            {
-                if (!_initialStartup)
-                    WriteBytes(_gameAccessHwndStatic, _offset_camera_reset, GameData.PATCH_CAMRESET_LOCKON_ENABLE);
-                if (showStatus) UpdateStatus(DateTime.Now.ToString("HH:mm:ss") + " Game unpatched!", Brushes.White);
-                return false;
-            }
-
-            if (showStatus) UpdateStatus(DateTime.Now.ToString("HH:mm:ss") + " Game patched!", Brushes.Green);
-            return true;
-        }
-
-        /// <summary>
-        /// Patches the game's auto loot.
-        /// </summary>
-        /// <param name="showStatus">Determines if status should be updated from within method, default is true.</param>
-        private bool PatchAutoloot(bool showStatus = true)
-        {
-            if (!this.cbAutoLoot.IsEnabled || _offset_autoloot == 0x0 || !CanPatchGame()) return false;
-            if (this.cbAutoLoot.IsChecked == true)
-            {
-                WriteBytes(_gameAccessHwndStatic, _offset_autoloot, GameData.PATCH_AUTOLOOT_ENABLE);
-            }
-            else if (this.cbAutoLoot.IsChecked == false)
-            {
-                if (!_initialStartup)
-                    WriteBytes(_gameAccessHwndStatic, _offset_autoloot, GameData.PATCH_AUTOLOOT_DISABLE);
-                if (showStatus) UpdateStatus(DateTime.Now.ToString("HH:mm:ss") + " Game unpatched!", Brushes.White);
-                return false;
-            }
-
-            if (showStatus) UpdateStatus(DateTime.Now.ToString("HH:mm:ss") + " Game patched!", Brushes.Green);
-            return true;
-        }
-
-        /// <summary>
-        /// Patches the game's dragonrot effect on NPCs.
-        /// </summary>
-        /// <param name="showStatus">Determines if status should be updated from within method, default is true.</param>
-        private bool PatchDragonrot(bool showStatus = true)
-        {
-            if (!this.cbDragonrot.IsEnabled || _offset_dragonrot_routine == 0x0 || !CanPatchGame()) return false;
-            if (this.cbDragonrot.IsChecked == true)
-            {
-                WriteBytes(_gameAccessHwndStatic, _offset_dragonrot_routine, GameData.PATCH_DRAGONROT_EFFECT_DISABLE);
-            }
-            else if (this.cbDragonrot.IsChecked == false)
-            {
-                if (!_initialStartup)
-                    WriteBytes(_gameAccessHwndStatic, _offset_dragonrot_routine, GameData.PATCH_DRAGONROT_EFFECT_ENABLE);
-                if (showStatus) UpdateStatus(DateTime.Now.ToString("HH:mm:ss") + " Game unpatched!", Brushes.White);
-                return false;
-            }
-
-            if (showStatus) UpdateStatus(DateTime.Now.ToString("HH:mm:ss") + " Game patched!", Brushes.Green);
-            return true;
-        }
-
-        /// <summary>
-        /// Patches the game's death penalties.
-        /// </summary>
-        /// <param name="showStatus">Determines if status should be updated from within method, default is true.</param>
-        private bool PatchDeathPenalty(bool showStatus = true)
-        {
-            if (!this.cbDeathPenalty.IsEnabled || _offset_deathpenalties2 == 0x0 || !CanPatchGame()) return false;
-            SetModeTag();
-            if (this.cbDeathPenalty.IsChecked == true)
-            {
-                WriteBytes(_gameAccessHwndStatic, _offset_deathpenalties1, GameData.PATCH_DEATHPENALTIES1_DISABLE);
-                WriteBytes(_gameAccessHwndStatic, _offset_deathpenalties2, GameData.PATCH_DEATHPENALTIES2_DISABLE);
-                if (!_isLegacyVersion && _offset_deathpenalties3 != 0x0)
-                    WriteBytes(_gameAccessHwndStatic, _offset_deathpenalties3, GameData.PATCH_DEATHPENALTIES3_DISABLE);
-            }
-            else if (this.cbDeathPenalty.IsChecked == false)
-            {
-                if (!_initialStartup)
-                {
-                    WriteBytes(_gameAccessHwndStatic, _offset_deathpenalties1, _patch_deathpenalties1_enable);
-                    WriteBytes(_gameAccessHwndStatic, _offset_deathpenalties2, _patch_deathpenalties2_enable);
-                    if (!_isLegacyVersion && _offset_deathpenalties3 != 0x0)
-                        WriteBytes(_gameAccessHwndStatic, _offset_deathpenalties3, _patch_deathpenalties3_enable);
-                }
-                if (showStatus) UpdateStatus(DateTime.Now.ToString("HH:mm:ss") + " Game unpatched!", Brushes.White);
-                return false;
-            }
-
-            if (showStatus) UpdateStatus(DateTime.Now.ToString("HH:mm:ss") + " Game patched!", Brushes.Green);
-            return true;
-        }
-
-        /// <summary>
-        /// Patches the game's hidden death penalties.
-        /// </summary>
-        /// <param name="showStatus">Determines if status should be updated from within method, default is true.</param>
-        private bool PatchDeathPenaltyHidden(bool showStatus = true)
-        {
-            if (!this.cbDeathPenaltyHidden.IsEnabled || _offset_deathscounter_routine == 0x0 || !CanPatchGame()) return false;
-            if (this.cbDeathPenaltyHidden.IsChecked == true)
-            {
-                WriteBytes(_gameAccessHwndStatic, _offset_deathscounter_routine, GameData.PATCH_DEATHSCOUNTER_DISABLE);
-            }
-            else if (this.cbDeathPenaltyHidden.IsChecked == false)
-            {
-                if (!_initialStartup)
-                    WriteBytes(_gameAccessHwndStatic, _offset_deathscounter_routine, GameData.PATCH_DEATHSCOUNTER_ENABLE);
-                if (showStatus) UpdateStatus(DateTime.Now.ToString("HH:mm:ss") + " Game unpatched!", Brushes.White);
-                return false;
-            }
-
-            if (showStatus) UpdateStatus(DateTime.Now.ToString("HH:mm:ss") + " Game patched!", Brushes.Green);
-            return true;
-        }
-
-        /// <summary>
-        /// Patches game's global speed.
-        /// </summary>
-        /// <param name="showStatus">Determines if status should be updated from within method, default is true.</param>
-        private bool PatchGameSpeed(bool showStatus = true)
-        {
-            if (!this.cbGameSpeed.IsEnabled || _offset_timescale == 0x0 || !CanPatchGame()) return false;
-            if (this.cbGameSpeed.IsChecked == true)
-            {
-                bool isNumber = Int32.TryParse(this.tbGameSpeed.Text, out int gameSpeed);
-                if (gameSpeed < 0 || !isNumber)
-                {
-                    this.tbGameSpeed.Text = "100";
-                    gameSpeed = 100;
-                }
-                else if (gameSpeed >= 999)
-                {
-                    this.tbGameSpeed.Text = "999";
-                    gameSpeed = 1000;
-                }
-                float timeScale = gameSpeed / 100f;
-                if (timeScale < 0.01f)
-                    timeScale = 0.0001f;
-                WriteBytes(_gameAccessHwndStatic, _offset_timescale, BitConverter.GetBytes(timeScale));
-                SetModeTag();
-            }
-            else if (this.cbGameSpeed.IsChecked == false)
-            {
-                if (!_initialStartup)
-                    WriteBytes(_gameAccessHwndStatic, _offset_timescale, BitConverter.GetBytes(1.0f));
-                if (showStatus) UpdateStatus(DateTime.Now.ToString("HH:mm:ss") + " Game unpatched!", Brushes.White);
-                SetModeTag();
-                return false;
-            }
-
-            if (showStatus) UpdateStatus(DateTime.Now.ToString("HH:mm:ss") + " Game patched!", Brushes.Green);
-            return true;
-        }
-
-        /// <summary>
-        /// Patches game's player speed.
-        /// </summary>
-        /// <param name="showStatus">Determines if status should be updated from within method, default is true.</param>
-        private bool PatchPlayerSpeed(bool showStatus = true)
-        {
-            if (!this.cbPlayerSpeed.IsEnabled || !CanPatchGame()) return false;
-            if (this.cbPlayerSpeed.IsChecked == true)
-            {
-                if (_offset_timescale_player_pointer_start > 0x0) ReadPlayerTimescaleOffsets();
-                if (_offset_timescale_player == 0x0)
-                {
-                    this.cbPlayerSpeed.IsChecked = false;
-                    return false;
-                }
-            }
-            if (_offset_timescale_player == 0x0) return false;
-            if (this.cbPlayerSpeed.IsChecked == true)
-            {
-                bool isNumber = Int32.TryParse(this.tbPlayerSpeed.Text, out int playerSpeed);
-                if (playerSpeed < 0 || !isNumber)
-                {
-                    this.tbPlayerSpeed.Text = "100";
-                    playerSpeed = 100;
-                }
-                else if (playerSpeed >= 999)
-                {
-                    this.tbPlayerSpeed.Text = "999";
-                    playerSpeed = 1000;
-                }
-                float timeScalePlayer = playerSpeed / 100f;
-                if (timeScalePlayer < 0.01f)
-                    timeScalePlayer = 0.0001f;
-                WriteBytes(_gameAccessHwndStatic, _offset_timescale_player, BitConverter.GetBytes(timeScalePlayer));
-                if (!_dispatcherTimerFreezeMem.IsEnabled) _dispatcherTimerFreezeMem.Start();
-                SetModeTag();
-            }
-            else if (this.cbPlayerSpeed.IsChecked == false)
-            {
-                if (!_initialStartup)
-                    WriteBytes(_gameAccessHwndStatic, _offset_timescale_player, BitConverter.GetBytes(1.0f));
-                if (showStatus) UpdateStatus(DateTime.Now.ToString("HH:mm:ss") + " Game unpatched!", Brushes.White);
-                _dispatcherTimerFreezeMem.Stop();
-                SetModeTag();
-                return false;
-            }
-
-            if (showStatus) UpdateStatus(DateTime.Now.ToString("HH:mm:ss") + " Game patched!", Brushes.Green);
-            return true;
-        }
-
-        /// <summary>
         /// Patch up this broken port of a game.
         /// </summary>
         private void PatchGame()
@@ -1269,124 +721,13 @@ namespace SekiroFpsUnlockAndMore
                 PatchFramelock(false),
                 PatchResolution(false),
                 PatchFov(false),
-                PatchWindow(false),
-                PatchCamReset(false),
-                PatchAutoloot(false),
-                PatchDragonrot(false),
-                PatchDeathPenalty(false),
-                PatchGameSpeed(false),
-                PatchPlayerSpeed(false)
+                PatchWindow(false)
             };
             if (results.IndexOf(true) > -1)
                 UpdateStatus(DateTime.Now.ToString("HH:mm:ss") + " Game patched!", Brushes.Green);
             else
                 UpdateStatus(DateTime.Now.ToString("HH:mm:ss") + " Game unpatched!", Brushes.White);
             _initialStartup = false;
-        }
-
-        /// <summary>
-        /// Inject or eject code to control cam adjustment.
-        /// </summary>
-        private void InjectCamAdjust()
-        {
-            if (!CanPatchGame() || !_codeCave_camadjust) return;
-
-            if (this.cbCamAdjust.IsChecked == true)
-            {
-                if (!_settingsService.ApplicationSettings.cameraAdjustNotify)
-                {
-                    MessageBoxResult result = MessageBox.Show("Disabling camera auto adjustment is intended for mouse users.\n\n" +
-                                                              "If you are using a controller this will not work perfectly and you will temporary loose the deadzones on your controller (slow tiling).\n\n" +
-                                                              "Do you want to continue?", "Sekiro FPS Unlocker and more", MessageBoxButton.YesNo, MessageBoxImage.Warning);
-                    if (result == MessageBoxResult.No)
-                    {
-                        this.cbCamAdjust.IsEnabled = false;
-                        this.cbCamAdjust.IsChecked = false;
-                        this.cbCamAdjust.IsEnabled = true;
-                        return;
-                    }
-                    result = MessageBox.Show("Are you using a mouse as input?\n\n" +
-                                             "To change your selection just delete the configuration file: SekiroFpsUnlockAndMore.xml", "Sekiro FPS Unlocker and more", MessageBoxButton.YesNo, MessageBoxImage.Question);
-                    if (result == MessageBoxResult.No)
-                    {
-                        _settingsService.ApplicationSettings.peasantInput = true;
-                        this.sbInput.Text = "Controller";
-                    }
-                    else this.sbInput.Text = "Mouse";
-                    _settingsService.ApplicationSettings.cameraAdjustNotify = true;
-                }
-
-                this.cbCamAdjust.IsEnabled = false;
-                _memoryCaveGenerator.ActivateCodeCaveByName(_CODECAVE_CAMADJUST_PITCH);
-                _memoryCaveGenerator.ActivateCodeCaveByName(_CODECAVE_CAMADJUST_YAW_Z);
-                if (!_settingsService.ApplicationSettings.peasantInput)
-                    _memoryCaveGenerator.ActivateCodeCaveByName(_CODECAVE_CAMADJUST_PITCH_XY); // BREAKS PITCH AND OTHER CONTROLS ON CONTROLLERS
-                _memoryCaveGenerator.ActivateCodeCaveByName(_CODECAVE_CAMADJUST_YAW_XY);
-                this.cbCamAdjust.IsEnabled = true;
-            }
-            else
-            {
-                if (!_initialStartup)
-                {
-                    this.cbCamAdjust.IsEnabled = false;
-                    _memoryCaveGenerator.DeactivateCodeCaveByName(_CODECAVE_CAMADJUST_PITCH);
-                    _memoryCaveGenerator.DeactivateCodeCaveByName(_CODECAVE_CAMADJUST_YAW_Z);
-                    _memoryCaveGenerator.DeactivateCodeCaveByName(_CODECAVE_CAMADJUST_PITCH_XY);
-                    _memoryCaveGenerator.DeactivateCodeCaveByName(_CODECAVE_CAMADJUST_YAW_XY);
-                    this.cbCamAdjust.IsEnabled = true;
-                }
-            }
-        }
-
-        /// <summary>
-        /// Inject or eject code to control emblem upgrades.
-        /// </summary>
-        private void InjectEmblemUpgrades()
-        {
-            if (!CanPatchGame() || !_codeCave_emblemupgrade) return;
-
-            if (this.cbEmblemUpgrade.IsChecked == true)
-            {
-                this.cbEmblemUpgrade.IsEnabled = false;
-                _memoryCaveGenerator.ActivateCodeCaveByName(_CODECAVE_EMBLEM_UPGRADE);
-                this.cbEmblemUpgrade.IsEnabled = true;
-            }
-            else
-            {
-                this.cbEmblemUpgrade.IsEnabled = false;
-                _memoryCaveGenerator.DeactivateCodeCaveByName(_CODECAVE_EMBLEM_UPGRADE);
-                this.cbEmblemUpgrade.IsEnabled = true;
-            }
-        }
-
-        /// <summary>
-        /// Freeze values in memory that can't be patched to require no freezing easily.
-        /// </summary>
-        private void FreezeMemory(object sender, EventArgs e)
-        {
-            if (!this.cbPlayerSpeed.IsEnabled || this.cbPlayerSpeed.IsChecked != true)
-            {
-                _dispatcherTimerFreezeMem.Stop();
-                return;
-            }
-            if (_offset_timescale_player_pointer_start == 0x0 || !CanPatchGame()) return;
-            if (_offset_timescale_player_pointer_start > 0x0) ReadPlayerTimescaleOffsets();
-            if (_offset_timescale_player == 0x0) return;
-
-            bool isNumber = Int32.TryParse(this.tbPlayerSpeed.Text, out int playerSpeed);
-            if (playerSpeed < 0 || !isNumber)
-            {
-                this.tbPlayerSpeed.Text = "100";
-                playerSpeed = 100;
-            }
-            else if (playerSpeed >= 999)
-            {
-                this.tbPlayerSpeed.Text = "999";
-                playerSpeed = 1000;
-            }
-            float timeScalePlayer = playerSpeed / 100f;
-            if (timeScalePlayer < 0.01f) timeScalePlayer = 0.00001f;
-            WriteBytes(_gameAccessHwndStatic, _offset_timescale_player, BitConverter.GetBytes(timeScalePlayer));
         }
 
         /// <summary>
@@ -1403,59 +744,6 @@ namespace SekiroFpsUnlockAndMore
             if (totalKills < 0) totalKills = 0;
             _statusViewModel.Kills = totalKills;
             if (_statLoggingEnabled) LogStatsFile(_path_killsLog, totalKills.ToString());
-        }
-
-        /// <summary>
-        /// Sets mode according to user settings.
-        /// </summary>
-        private void SetModeTag()
-        {
-            if (_debugMode) return;
-            string mode = "";
-            bool isGameSpeed = this.cbGameSpeed.IsChecked == true;
-            bool isPlayerSpeed = this.cbPlayerSpeed.IsChecked == true;
-            if (!Int32.TryParse(this.tbGameSpeed.Text, out int gameSpeed)) gameSpeed = 100;
-            if (!Int32.TryParse(this.tbPlayerSpeed.Text, out int playerSpeed)) playerSpeed = 100;
-            if (!isGameSpeed) gameSpeed = 100;
-            if (!isPlayerSpeed) playerSpeed = 100;
-            int speedDifference = playerSpeed - gameSpeed;
-            bool gitGudLmao = false;
-            if (isGameSpeed || isPlayerSpeed)
-            {
-                if (speedDifference > 5 || (isGameSpeed && gameSpeed < 90))
-                    mode = "Easy mode";
-                if (speedDifference > 20 || (isGameSpeed && gameSpeed <= 80))
-                {
-                    gitGudLmao = true;
-                    mode = "Journalist mode";
-                }
-                if (speedDifference > 35 || (isGameSpeed && gameSpeed <= 65))
-                {
-                    gitGudLmao = true;
-                    mode = "you've cheated yourself";
-                }
-                if (speedDifference <= -10 && (!isGameSpeed || gameSpeed >= 100))
-                    mode = "Getting gud";
-                if (isGameSpeed && gameSpeed == 0)
-                    mode = "Time freeze";
-                if (isGameSpeed && gameSpeed >= 200)
-                    mode = "Super speed";
-            }
-            if (this.cbDeathPenalty.IsChecked == true)
-            {
-                mode = "Cheater mode";
-                this.sbMode.Foreground = Brushes.Red;
-            }
-            else if (gitGudLmao)
-            {
-                ResourceDictionary resourceDictionary = Application.Current.Resources;
-                LinearGradientBrush statusBarModeColor = resourceDictionary["resStatusBarModeColorMock"] as LinearGradientBrush;
-                this.sbMode.Foreground = statusBarModeColor;
-            }
-            else
-                this.sbMode.Foreground = Brushes.Black;
-
-            this.sbMode.Text = mode;
         }
 
         /// <summary>
@@ -1784,118 +1072,6 @@ namespace SekiroFpsUnlockAndMore
                     MessageBox.Show("Failed to delete stats files: " + ex.Message, "Sekiro Fps Unlock And More");
                 }
             }
-        }
-
-        private void CbCamAdjust_Check_Handler(object sender, RoutedEventArgs e)
-        {
-            if (this.cbCamAdjust.IsEnabled)
-                InjectCamAdjust();
-        }
-
-        private void CbCamReset_Check_Handler(object sender, RoutedEventArgs e)
-        {
-            if (this.cbCamReset.IsEnabled)
-                PatchCamReset();
-        }
-
-        private void CbAutoLoot_Check_Handler(object sender, RoutedEventArgs e)
-        {
-            if (this.cbAutoLoot.IsEnabled == true)
-                PatchAutoloot();
-        }
-
-        private void CbDragonrot_Check_Handler(object sender, RoutedEventArgs e)
-        {
-            if (this.cbDragonrot.IsEnabled)
-                PatchDragonrot();
-        }
-
-        private void CbDeathPenalty_Check_Handler(object sender, RoutedEventArgs e)
-        {
-            if (this.cbDeathPenalty.IsEnabled)
-                PatchDeathPenalty();
-        }
-
-        private void CbDeathPenaltyHidden_Check_Handler(object sender, RoutedEventArgs e)
-        {
-            if (this.cbDeathPenaltyHidden.IsEnabled && this.cbDeathPenaltyHidden.Visibility == Visibility.Visible)
-                PatchDeathPenaltyHidden();
-        }
-
-        private void CbEmblemUpgrade_Check_Handler(object sender, RoutedEventArgs e)
-        {
-            if (this.cbEmblemUpgrade.IsEnabled)
-                InjectEmblemUpgrades();
-        }
-
-        private void CbGameSpeed_Check_Handler(object sender, RoutedEventArgs e)
-        {
-            PatchGameSpeed();
-        }
-
-        private void BGs0_Click(object sender, RoutedEventArgs e)
-        {
-            this.tbGameSpeed.Text = "0";
-            if (cbGameSpeed.IsChecked == true) PatchGameSpeed();
-        }
-
-        private void BGsLower_Click(object sender, RoutedEventArgs e)
-        {
-            if (Int32.TryParse(this.tbGameSpeed.Text, out int gameSpeed) && gameSpeed > 4)
-            {
-                this.tbGameSpeed.Text = (gameSpeed - 5).ToString();
-                if (cbGameSpeed.IsChecked == true) PatchGameSpeed();
-            }
-        }
-
-        private void BGsHigher_Click(object sender, RoutedEventArgs e)
-        {
-            if (Int32.TryParse(this.tbGameSpeed.Text, out int gameSpeed) && gameSpeed < 995)
-            {
-                this.tbGameSpeed.Text = (gameSpeed + 5).ToString();
-                if (cbGameSpeed.IsChecked == true) PatchGameSpeed();
-            }
-        }
-
-        private void BGs100_Click(object sender, RoutedEventArgs e)
-        {
-            this.tbGameSpeed.Text = "100";
-            if (cbGameSpeed.IsChecked == true) PatchGameSpeed();
-        }
-
-        private void CbPlayerSpeed_Check_Handler(object sender, RoutedEventArgs e)
-        {
-            PatchPlayerSpeed();
-        }
-
-        private void BPs0_Click(object sender, RoutedEventArgs e)
-        {
-            this.tbPlayerSpeed.Text = "0";
-            if (this.cbPlayerSpeed.IsChecked == true) PatchPlayerSpeed();
-        }
-
-        private void BPsLower_Click(object sender, RoutedEventArgs e)
-        {
-            if (Int32.TryParse(this.tbPlayerSpeed.Text, out int playerSpeed) && playerSpeed > 4)
-            {
-                this.tbPlayerSpeed.Text = (playerSpeed - 5).ToString();
-                if (this.cbPlayerSpeed.IsChecked == true) PatchPlayerSpeed();
-            }
-        }
-
-        private void BPsHigher_Click(object sender, RoutedEventArgs e)
-        {
-            if (Int32.TryParse(this.tbPlayerSpeed.Text, out int playerSpeed) && playerSpeed < 995)
-            {
-                this.tbPlayerSpeed.Text = (playerSpeed + 5).ToString();
-                if (this.cbPlayerSpeed.IsChecked == true) PatchPlayerSpeed();
-            }
-        }
-
-        private void BPs100_Click(object sender, RoutedEventArgs e)
-        {
-            this.tbPlayerSpeed.Text = "100";
-            if (this.cbPlayerSpeed.IsChecked == true) PatchPlayerSpeed();
         }
 
         private void BPatch_Click(object sender, RoutedEventArgs e)
